@@ -1,143 +1,161 @@
-var board = null
-var game = new Chess()
-var $status = $('#status')
-var $fen = $('#fen')
+import {
+  INPUT_EVENT_TYPE,
+  COLOR,
+  Chessboard,
+  MARKER_TYPE
+} from "./cm-chessboard/Chessboard.js"
+const chess = new Chess()
+
+const board = new Chessboard(document.getElementById("board"), {
+  position: chess.fen(),
+  sprite: {
+    url: "../assets/images/chessboard-sprite-staunty.svg"
+  },
+  style: {
+    moveMarker: MARKER_TYPE.square,
+    hoverMarker: undefined
+  },
+  orientation: COLOR.white
+})
+board.enableMoveInput(inputHandler)
 
 let correct = 0
 let wrong = 0
 
 let levels = []
 let cur_answer = ""
+let is_scored = true
+let puzzle
 
 //load puzzles
 fetch('output.txt')
-    .then(response => response.text())
-    .then(text => {
-        levels = text.split("\n")
-        levels.pop() //last element is empty, so can remove
-        console.log(levels)
-        loadPuzzle()
-    })
-
-
-function loadPuzzle () {
-    let number = Math.floor(Math.random()*levels.length)
-    const puzzle = JSON.parse( levels[number] )
-    console.log(puzzle)
-    game.load(puzzle.fen)
-    updateStatus()
-    board.position(puzzle.fen)
-    cur_answer = puzzle.answer
-    document.getElementById("puzzleIdP").innerHTML = "puzzle #"+number.toString()
-    document.getElementById("puzzleText").innerHTML = "blunder into a mate in " + Math.abs(puzzle.mate_in)
-}
-
-function onDragStart (source, piece, position, orientation) {
-  // do not pick up pieces if the game is over
-  if (game.game_over()) return false
-
-  // only pick up pieces for the side to move
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-    return false
-  }
-}
-
-function onDrop (source, target) {
-  // see if the move is legal
-  var move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q' // NOTE: always promote to a queen for example simplicity
+  .then(response => response.text())
+  .then(text => {
+    levels = text.split("\n")
+    levels.pop() //last element is empty, so can remove
+    loadPuzzle()
   })
 
-  // illegal move
-  if (move === null) return 'snapback'
-  else {
-    let input_answer = source+target
-      
-    if (cur_answer != "") {
+function loadPuzzle() {
+  is_scored = true
+  let number = Math.floor(Math.random() * levels.length)
+  puzzle = JSON.parse(levels[number])
+  console.log(puzzle)
+  chess.load(puzzle.fen)
+  board.setPosition(puzzle.fen)
 
-        if (cur_answer == input_answer) {
-            console.log("correct!")
-            correct += 1
+  board.setOrientation(chess.turn() == 'w' ? COLOR.white : COLOR.black)
 
-            let boardClasses = document.getElementById("myBoard").classList;
-            boardClasses.add("correct")
+  if (chess.turn() == 'w') {
+    document.getElementById('status').innerText = "white to blunder"
+    document.getElementById('statusBar').className = ""
+    document.getElementById('statusBar').classList.add("white-to-move")
+  } else {
+    document.getElementById('status').innerText = "black to blunder"
+    document.getElementById('statusBar').className = ""
+    document.getElementById('statusBar').classList.add("black-to-move")
+  }
 
-            setTimeout(()=>boardClasses.value="", 1000);
-            
-        }
-        else {
-            console.log("wrong!")
-            wrong += 1
+  cur_answer = puzzle.answer
+  document.getElementById("puzzleIdP").innerHTML = "puzzle #" + number.toString()
+  document.getElementById("puzzleText").innerHTML = "blunder into a mate in " + Math.abs(puzzle.mate_in)
 
-            let boardClasses = document.getElementById("myBoard").classList;
-            boardClasses.add("wrong")
+  board.enableMoveInput(inputHandler)
+}
 
-            setTimeout(()=>boardClasses.value="", 1000);
-        }
-
-        cur_answer = "" //this will deny double submissions
-        loadPuzzle ()
+function inputHandler(event) {
+  console.log("event", event)
+  event.chessboard.removeMarkers(undefined, MARKER_TYPE.dot)
+  if (event.type === INPUT_EVENT_TYPE.moveStart) {
+    const moves = chess.moves({
+      square: event.square,
+      verbose: true
+    });
+    for (const move of moves) {
+      event.chessboard.addMarker(move.to, MARKER_TYPE.dot)
     }
-  }
-
-  updateStatus()
-}
-
-// update the board position after the piece snap
-// for castling, en passant, pawn promotion
-function onSnapEnd () {
-  board.position(game.fen())
-}
-
-function updateStatus () {
-  var status = ''
-
-  var moveColor = 'White'
-  if (game.turn() === 'b') {
-    board.orientation('black')
-    moveColor = 'Black'
-  }
-  else {
-    board.orientation('white')
-  }
-
-  // checkmate?
-  if (game.in_checkmate()) {
-    status = 'Game over, ' + moveColor + ' is in checkmate.'
-  }
-
-  // draw?
-  else if (game.in_draw()) {
-    status = 'Game over, drawn position'
-  }
-
-  // game still on
-  else {
-    status = moveColor + ' to move'
-
-    // check?
-    if (game.in_check()) {
-      status += ', ' + moveColor + ' is in check'
+    return moves.length > 0
+  } else if (event.type === INPUT_EVENT_TYPE.moveDone) {
+    const move = {
+      from: event.squareFrom,
+      to: event.squareTo
     }
+    const result = chess.move(move)
+    if (result) {
+      event.chessboard.disableMoveInput()
+      event.chessboard.setPosition(chess.fen())
+      const possibleMoves = chess.moves({
+        verbose: true
+      })
+
+      //wow valid move inputted!
+      if (move.from + move.to == cur_answer) {
+        console.log("CORRECT")
+        document.getElementById('status').innerText = "✔ correct"
+        document.getElementById('statusBar').className = ""
+        document.getElementById('statusBar').classList.add("correct")
+        
+        if (is_scored)
+          correct += 1
+
+        document.getElementById('winButtons').style.display="flex";
+      } else {
+        console.log("WRONG")
+        document.getElementById('status').innerText = "✘ incorrect"
+        document.getElementById('statusBar').className = ""
+        document.getElementById('statusBar').classList.add("wrong")
+
+        if (is_scored)
+          wrong += 1
+
+        document.getElementById('loseButtons').style.display="flex";
+      }
+
+      document.getElementById('correctText').innerHTML = "correct: " + correct;
+      document.getElementById('wrongText').innerHTML = "wrong: " + wrong;
+    } else {
+      console.warn("invalid move", move)
+    }
+    return result
+  }
+}
+
+document.getElementById("retryButton").addEventListener("click", () => {
+  chess.load(puzzle.fen)
+  board.setPosition(puzzle.fen)
+  is_scored = false
+  board.enableMoveInput(inputHandler)
+
+  if (chess.turn() == 'w') {
+    document.getElementById('status').innerText = "white to blunder"
+    document.getElementById('statusBar').className = ""
+    document.getElementById('statusBar').classList.add("white-to-move")
+  } else {
+    document.getElementById('status').innerText = "black to blunder"
+    document.getElementById('statusBar').className = ""
+    document.getElementById('statusBar').classList.add("black-to-move")
   }
 
-  document.getElementById("status").innerHTML = status
-  $fen.html(game.fen())
+  document.getElementById('loseButtons').style.display="none";
+})
 
-  document.getElementById("correctText").innerHTML = "correct: " + correct.toString()
-  document.getElementById("wrongText").innerHTML = "wrong: " + wrong.toString()
-}
+document.getElementById("loseNextButton").addEventListener("click", () => {
+  loadPuzzle();
+  document.getElementById('loseButtons').style.display="none";
+})
+document.getElementById("winNextButton").addEventListener("click", () => {
+  loadPuzzle();
+  document.getElementById('winButtons').style.display="none";
+})
+document.getElementById("tellSolution").addEventListener("click", () => {
+  document.getElementById('status').innerText = "the solution was " + puzzle.answer
 
-var config = {
-  draggable: true,
-  position: 'start',
-  onDragStart: onDragStart,
-  onDrop: onDrop,
-  onSnapEnd: onSnapEnd
-}
+  chess.load(puzzle.fen)
+  board.disableMoveInput()
+  board.setPosition(chess.fen())
 
-board = Chessboard('myBoard', config)
-updateStatus()
+  setTimeout(function(){   
+    chess.move(cur_answer, {sloppy:true})
+    board.setPosition(chess.fen())
+  }, 500);
+})

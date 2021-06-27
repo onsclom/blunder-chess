@@ -6,25 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>blunder puzzles</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="./chessboardjs-1.0.0/css/chessboard-1.0.0.css">
+    <link rel="stylesheet" href="./styles/cm-chessboard.css"/>
     <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body id="bodyId">
     <script src="chess.js"></script>
-    <script src="./chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
     
     <h1>blunder puzzles</h1>
-    <p id="puzzleIdP">puzzle #124</p>
-    <p id="puzzleText">white to move and blunder into mate in X</p>
-    <div id="myBoard" style="width: 401px; height: 401px;" class=""></div>
 
-    <p id="status"></p>
-    
+    <span id="puzzleIdP">LOADING PUZZLE</span> 
+    <span>-</span>
+    <span id="puzzleText"></span>
+    <div id="boardContainer">
+        <div id="board" class=""></div>
+        <div id="statusBar">
+            <p id="status"></p>
+        </div>
+        <div id="scores">
+            <p id="correctText">correct: 0</p>
+            <p id="wrongText">wrong: 0</p>
+        </div>
+    </div>
 
-    <p id="correctText">correct: 0</p>
-    <p id="wrongText">wrong: 0</p>
-    <div id="fen"></div>
+    <div class="buttonTray" id="loseButtons">
+        <button id="retryButton">retry</button>
+        <button id="tellSolution">solution</button>
+        <button id="loseNextButton">next</button>
+    </div>
 
-    <script src="./index.js"></script>
+    <div class="buttonTray" id="winButtons">
+        <button id="winNextButton">next</button>
+    </div>
+
+    <script src="./index.js" type="module"></script>
 </body>
 </html>
