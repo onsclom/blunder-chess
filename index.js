@@ -94,11 +94,11 @@ function inputHandler(event) {
         document.getElementById('status').innerText = "✔ correct"
         document.getElementById('statusBar').className = ""
         document.getElementById('statusBar').classList.add("correct")
-        
+
         if (is_scored)
           correct += 1
 
-        document.getElementById('winButtons').style.display="flex";
+        document.getElementById('winButtons').style.display = "flex";
       } else {
         console.log("WRONG")
         document.getElementById('status').innerText = "✘ incorrect"
@@ -108,7 +108,7 @@ function inputHandler(event) {
         if (is_scored)
           wrong += 1
 
-        document.getElementById('loseButtons').style.display="flex";
+        document.getElementById('loseButtons').style.display = "flex";
       }
 
       document.getElementById('correctText').innerHTML = "correct: " + correct;
@@ -136,16 +136,16 @@ document.getElementById("retryButton").addEventListener("click", () => {
     document.getElementById('statusBar').classList.add("black-to-move")
   }
 
-  document.getElementById('loseButtons').style.display="none";
+  document.getElementById('loseButtons').style.display = "none";
 })
 
 document.getElementById("loseNextButton").addEventListener("click", () => {
   loadPuzzle();
-  document.getElementById('loseButtons').style.display="none";
+  document.getElementById('loseButtons').style.display = "none";
 })
 document.getElementById("winNextButton").addEventListener("click", () => {
   loadPuzzle();
-  document.getElementById('winButtons').style.display="none";
+  document.getElementById('winButtons').style.display = "none";
 })
 document.getElementById("tellSolution").addEventListener("click", () => {
   document.getElementById('status').innerText = "the solution was " + puzzle.answer
@@ -154,8 +154,10 @@ document.getElementById("tellSolution").addEventListener("click", () => {
   board.disableMoveInput()
   board.setPosition(chess.fen())
 
-  setTimeout(function(){   
-    chess.move(cur_answer, {sloppy:true})
+  setTimeout(function () {
+    chess.move(cur_answer, {
+      sloppy: true
+    })
     board.setPosition(chess.fen())
   }, 500);
 })
