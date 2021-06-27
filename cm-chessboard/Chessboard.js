@@ -59,7 +59,7 @@ export class Chessboard {
             responsive: true, // resizes the board based on element size
             animationDuration: 300, // pieces animation duration in milliseconds
             sprite: {
-                url: "assets/images/chessboard-sprite-staunty.svg", // pieces and markers are stored as svg sprite
+                url: "blunder-chess/assets/images/chessboard-sprite-staunty.svg", // pieces and markers are stored as svg sprite
                 size: 40, // the sprite size, defaults to 40x40px
                 cache: true // cache the sprite inline, in the HTML
             }
