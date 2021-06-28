@@ -36,7 +36,7 @@ while games_genned < games_to_gen:
             if evaled_moves[-2]["Mate"] == None:
                 print(rand_fen)
                 print(evaled_moves)
-                games_genned+=1
+                
                 
                 puzzle = {
                     "fen": rand_fen,
@@ -44,6 +44,22 @@ while games_genned < games_to_gen:
                     "answer": evaled_moves[-1]["Move"]
                 }
                 
+                moves = []
+                
+                board.push( chess.Move.from_uci(puzzle["answer"]) )
+
+                while board.is_game_over() == False:
+                    stockfish.set_fen_position(board.fen())
+                    best_move = stockfish.get_best_move()
+                    board.push( chess.Move.from_uci( best_move ) )
+                    moves.append(best_move)
+
+                puzzle["mate_moves"] = " ".join(moves)
+                
+                if ( abs(int(puzzle["mate_in"])) != (len(moves)+1)/2 ):
+                    continue
+                
+                games_genned+=1
                 output_file.write( str( json.dumps(puzzle) ) + "\n")
                 
 output_file.close()

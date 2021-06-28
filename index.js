@@ -19,6 +19,8 @@ const board = new Chessboard(document.getElementById("board"), {
 })
 board.enableMoveInput(inputHandler)
 
+const move_increment = 500
+
 let correct = 0
 let wrong = 0
 
@@ -26,6 +28,9 @@ let levels = []
 let cur_answer = ""
 let is_scored = true
 let puzzle
+
+//for making set interval moves
+let cur_state_id = 0
 
 //load puzzles
 fetch('output.txt')
@@ -36,7 +41,34 @@ fetch('output.txt')
     loadPuzzle()
   })
 
+function show_mate() {
+  let count = 1
+  let state = cur_state_id
+
+  for (let move of puzzle["mate_moves"].split(" ")) {
+
+    setTimeout(() => {
+      make_move(state, move)
+    }, move_increment * count)
+
+    count += 1
+  }
+}
+
+function make_move(state_id, move) {
+  console.log("old state id: " + state_id)
+  console.log("new state: " + cur_state_id)
+  if (cur_state_id == state_id) {
+
+    chess.move(move, {
+      sloppy: true
+    })
+    board.setPosition(chess.fen())
+  }
+}
+
 function loadPuzzle() {
+  cur_state_id += 1
   is_scored = true
   let number = Math.floor(Math.random() * levels.length)
   puzzle = JSON.parse(levels[number])
@@ -97,7 +129,8 @@ function inputHandler(event) {
 
         if (is_scored)
           correct += 1
-
+        
+        show_mate()
         document.getElementById('winButtons').style.display = "flex";
       } else {
         console.log("WRONG")
@@ -121,6 +154,7 @@ function inputHandler(event) {
 }
 
 document.getElementById("retryButton").addEventListener("click", () => {
+  cur_state_id += 1
   chess.load(puzzle.fen)
   board.setPosition(puzzle.fen)
   is_scored = false
@@ -154,10 +188,16 @@ document.getElementById("tellSolution").addEventListener("click", () => {
   board.disableMoveInput()
   board.setPosition(chess.fen())
 
-  setTimeout(function () {
-    chess.move(cur_answer, {
-      sloppy: true
-    })
-    board.setPosition(chess.fen())
-  }, 500);
+  let old_id = cur_state_id
+
+  setTimeout(() => {
+    if (old_id == cur_state_id) {
+      chess.move(cur_answer, {
+        sloppy: true
+      })
+      board.setPosition(chess.fen())
+
+      show_mate()
+    }
+  }, move_increment);
 })
